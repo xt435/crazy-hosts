@@ -1,0 +1,43 @@
+
+TEST URL::http://localhost:8093/getme/novice/reqid=007&reqname=JamesBond
+
+PROTOCOL REF:
+init:  'AC' + ctrlMark(1) + pointer(1) + data_length(2) + 'AA' + data(?) + token(?) + sumOfHexVal(ofHeader)(2) + 'DC'
+repl:  'BC' + ctrlMark(1) + pointer(1) + data_length(2) + 'DD' + data(?) + token(?) + sumOfHexVal(ofHeader)(2) + 'EC'
+
+datadomain:  'D5' + lengthOfIdentity(1) + identity(alt) + 'D4' + actionType(1) + dataFrame(1) + dataLength(2) + 'D3' + dataDomain(alt < 2048) + 'D2'
+
+
+DATA_DESIGN FOR GENERIC DATA USAGE:
+{
+	public_id: string,
+	serial_code: string,
+	[{param_name: string, 
+	  param_val: string, 
+	  param_type: string(includes 'text','number','price','date','list','dict')}],
+	create_time: long
+}
+
+e.g.:
+{"publicid":"000001","serialcode":"testcase001","datatree":[{"paramname":"testcaseone","paramtype":"text","paramval":{"0":"test"}}],"createat":"1000000000"}
+
+
+case of management on host_pool for chaining devices:
+* redis access for host_pool infos
+* calculate by ip likeness
+* group and save to mongo
+* collection: TruckChainHostPool   db:truck-lift-forks
+
+
+public chain key in mongo generate on a daily base:
+0 -> 4: [d ~ h]
+5 -> 10: [3 ~ 8]
+11 -> 17: [jamesbond]
+
+
+###############################################################
+#	the data collector - through api of restful				  #
+###############################################################
+1. asset collector = crazy_data_collector.assetReceiverRunner							-->redis PubSub
+2. virtual contract collector = crazy_data_collector.virtualContractReceiverRunner		-->redis PubSub
+3. human collector = crazy_data_collector.humanReceiver									-->redis queue
