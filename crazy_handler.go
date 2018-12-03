@@ -413,11 +413,11 @@ func syncOrigins(redisCli *redis.Client) {
 					origins = origins + (ori + "|")
 				}
 			}
-			if origins[len(origins)-1:] == "|" {
+			if len(origins) > 0 && origins[len(origins)-1:] == "|" {
 				origins = origins[0 : len(origins)-1]
+				redisCli.Del("#$-system-misc-")
+				redisCli.Append("#$-system-misc-", origins)
 			}
-			redisCli.Del("#$-system-misc-")
-			redisCli.Append("#$-system-misc-", origins)
 			time.Sleep(time.Second * 60)
 		}
 	}

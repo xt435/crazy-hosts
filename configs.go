@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -11,9 +12,21 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/nu7hatch/gouuid"
+	uuid "github.com/satori/go.uuid"
 	mgo "gopkg.in/mgo.v2"
 )
+
+func uuidGenAlt() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	fmt.Println(uuid)
+	return uuid
+}
 
 func uuidGen() string {
 	u, err := uuid.NewV4()
@@ -38,8 +51,8 @@ const (
 	default_server_port = ":8093"
 
 	//	mongod_main_one               = "192.168.204.130:27017"
-	mongod_main_one = "192.168.204.145:27017" //this one is for my local
-	// mongod_main_one = "127.0.0.1:27017" //this one is for alpha version
+	// mongod_main_one = "10.103.4.218:27017" //this one is for my local
+	mongod_main_one = "127.0.0.1:27017" //this one is for alpha version
 
 	mongod_main_db                  = "go_crazy_lemons"
 	mongod_coll_name_headinfo       = "headinfos"
@@ -57,8 +70,8 @@ const (
 	mongod_coll_name_qrgen_rec          = "QRGen_Record"
 
 	//	redis_host = "192.168.204.130"
-	redis_host = "192.168.204.145" //this one is for local
-	// redis_host = "127.0.0.1" //this one is for alpha version
+	// redis_host = "10.103.4.218" //this one is for local
+	redis_host = "127.0.0.1" //this one is for alpha version
 	redis_port = 6379
 	redis_db   = 0
 
