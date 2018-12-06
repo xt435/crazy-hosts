@@ -1,20 +1,14 @@
-package main
+package assethub
 
 import (
 	"encoding/json"
 	"fmt"
 	"strconv"
 
-	// "math/rand"
-
-	// "strconv"
-	// "strings"
 	bytes "bytes"
 	"time"
 
 	_redis "github.com/go-redis/redis"
-	// "gopkg.in/mgo.v2"
-	// "gopkg.in/mgo.v2/bson"
 )
 
 //********************************************* ASSETS ************************************************//
@@ -321,7 +315,7 @@ func fixOnHumanSerialNumber(origin string, humanName string) string {
 	return sn
 }
 
-func humanReceiver(rd *_redis.Client) {
+func HumanReceiver(rd *_redis.Client) {
 	for {
 		msg := rd.LPop(humansReceiver)
 		if msg != nil && msg.Val() != "" {
@@ -331,7 +325,7 @@ func humanReceiver(rd *_redis.Client) {
 	}
 }
 
-func assetReceiverRunner(rd *_redis.Client) {
+func AssetReceiverRunner(rd *_redis.Client) {
 	psb := rd.Subscribe(assetsReceiver)
 	defer psb.Close()
 	for {
@@ -353,7 +347,7 @@ func assetReceiverRunner(rd *_redis.Client) {
 	}
 }
 
-func virtualContractReceiverRunner(rd *_redis.Client) {
+func VirtualContractReceiverRunner(rd *_redis.Client) {
 	psb := rd.Subscribe(virtualContractReceiver)
 	defer psb.Close()
 	for {
@@ -378,7 +372,7 @@ func virtualContractReceiverRunner(rd *_redis.Client) {
 var bufForAssetSender = make([]string, 0)
 var bufForHumanSender = make([]string, 0)
 
-func assetSender(rd *_redis.Client) {
+func AssetSender(rd *_redis.Client) {
 	for {
 		if len(bufForAssetSender) > 0 {
 			rd.LPush(ASSET_TO_BASE, bufForAssetSender[0])
@@ -388,7 +382,7 @@ func assetSender(rd *_redis.Client) {
 	}
 }
 
-func humanSender(rd *_redis.Client) {
+func HumanSender(rd *_redis.Client) {
 	for {
 		if len(bufForHumanSender) > 0 {
 			rd.LPush(HUMAN_TO_BASE, bufForHumanSender[0])

@@ -1,4 +1,4 @@
-package main
+package assethub
 
 /*
 for redis:
@@ -24,7 +24,7 @@ import (
 var dataStoreHostPool DataStore
 var session *mgo.Session
 
-func initDataStoreHostPool() {
+func InitDataStoreHostPool() {
 	dataStoreHostPool.session = connectToDb()
 	session = dataStoreHostPool.session.Copy()
 }
@@ -33,7 +33,7 @@ var buf = make([]string, 0)
 
 var totalNumber int
 
-func initGroupingProcess(client *redis.Client) {
+func InitGroupingProcess(client *redis.Client) {
 	for {
 		if totalNumber == 0 {
 			ids, leng := getAllSerials(client)
@@ -47,7 +47,7 @@ func initGroupingProcess(client *redis.Client) {
 
 var runNumber int
 
-func grouping() {
+func Grouping() {
 	for {
 		if len(buf) > 0 {
 			hostFlating(buf[0])
@@ -58,7 +58,7 @@ func grouping() {
 	}
 }
 
-func groupingFinal() {
+func GroupingFinal() {
 	for {
 		if runNumber > 0 && totalNumber > 0 && runNumber >= totalNumber {
 			fmt.Println("group final process==" + time.Now().Format(time.RFC850))
@@ -275,7 +275,7 @@ func getAllSerials(redisCli *redis.Client) ([]string, int) {
 /*
 	daily chain public key generator
 */
-func dailyChainKeyGenerate() {
+func DailyChainKeyGenerate() {
 	for {
 		tm := time.Now().Format(time.RFC3339)
 		fmt.Println("TIMEFORCHAINKEY==" + tm)

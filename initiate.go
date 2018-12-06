@@ -2,88 +2,118 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
-	// sock "./sockCommsPack"
-
-	mgo "gopkg.in/mgo.v2"
+	hub "./assethub"
+	// sock "./monitors_pack"
 )
+
+var GATE_WAY_WORD = "trollschain"
 
 func main() {
 
+	var isRun string
+	var testLimit int
 	fmt.Println("TeeHee, world. This is the truck chain lead program. My name is Go Crazy.\nI was created by necrophiliaccannibal.")
+	fmt.Printf("==%s\n", "Yo, man, you wanna go for a performance test run? [y]=yes [n or any]=no")
+	fmt.Scanf("%s\n", &isRun)
+	if strings.Compare(isRun, "y") == 0 || strings.Compare(isRun, "yes") == 0 {
+		fmt.Printf("==%s\n", "Ok, enter a number max 1000000")
+		_, err := fmt.Scanf("%d\n", &testLimit)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		testLimit = 10
+	}
+	if testLimit > 1000000 {
+		testLimit = 1000000
+	}
+
+	goThruGoMap(testLimit)
 	var i = 0
 	for i < 3 {
 		var timeNow = time.Now().Format(time.RFC850)
-		fmt.Println("TeeHee " + strconv.Itoa(i+1) + "-" + timeNow)
+		fmt.Println("TeeHee now we start -> " + strconv.Itoa(i+1) + "-" + timeNow)
 		time.Sleep(time.Millisecond * 500)
 		i++
 	}
 
 	// go sock.MainClient("40.73.119.13", 9987) //being a client
 
-	clientOfRedis := RedisClient()
-	initDataStoreHandlers()
-	initDataStoreCrazyHandlers()
-	initDataStoreHostPool()
-	initCache()
-	initDataStoreHandlersMultiTrack()
+	clientOfRedis := hub.RedisClient()
+	hub.InitDataStoreHandlers()
+	hub.InitDataStoreCrazyHandlers()
+	hub.InitDataStoreHostPool()
+	hub.InitCache()
+	hub.InitDataStoreHandlersMultiTrack()
 
-	go initGroupingProcess(clientOfRedis)
-	go grouping()
-	go groupingFinal()
-	go dailyChainKeyGenerate()
+	go hub.InitGroupingProcess(clientOfRedis)
+	go hub.Grouping()
+	go hub.GroupingFinal()
+	go hub.DailyChainKeyGenerate()
 
-	go assetReceiverRunner(clientOfRedis)
-	go virtualContractReceiverRunner(clientOfRedis)
-	go humanReceiver(clientOfRedis)
+	go hub.AssetReceiverRunner(clientOfRedis)
+	go hub.VirtualContractReceiverRunner(clientOfRedis)
+	go hub.HumanReceiver(clientOfRedis)
 
-	go assetSender(clientOfRedis)
-	go humanSender(clientOfRedis)
+	go hub.AssetSender(clientOfRedis)
+	go hub.HumanSender(clientOfRedis)
 
-	go syncOrigins(clientOfRedis)
+	go hub.SyncOrigins(clientOfRedis)
 
-	handlerForFuckers("trollschain")
+	hub.HandlerForFuckers(GATE_WAY_WORD)
 }
 
-func connectToDb() *mgo.Session {
-	session, err := mgo.Dial(mongod_main_one)
-	checkWithWarn(err)
-	// defer session.Close()
-	session.SetMode(mgo.Monotonic, true)
-	return session
-}
-
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func checkWithWarn(err error) {
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func testOnGoMap() {
+func goThruGoMap(limit int) {
+	st := currentMilliseconds()
+	startTime := time.Now()
+	stStr := startTime.Format(time.RFC3339)
 	theMap := make([]map[string][]string, 0)
 	one := make(map[string][]string)
-	onelist := make([]string, 0)
-	onelist = append(onelist, "tester")
-	one["test"] = onelist
-	for t := range one {
-		for ii := range one[t] {
-			fmt.Println(one[t][ii])
+	var k = 0
+	for k < limit {
+		onelist := make([]string, 0)
+		if k%2 == 0 {
+			judger := rand.Intn(4)
+			var j = 0
+			for j < judger {
+				onelist = append(onelist, "--"+time.Now().Format(time.RFC3339))
+				j++
+			}
+		} else {
+			onelist = append(onelist, "-"+time.Now().Format(time.RFC850))
 		}
+		one["cairo"+strconv.Itoa(k)] = onelist
+		if k%5 == 0 {
+			fmt.Printf("%s", "+")
+		}
+		k++
 	}
 	theMap = append(theMap, one)
 	for i := range theMap {
 		for j := range theMap[i] {
 			for l := range theMap[i][j] {
-				fmt.Println(theMap[i][j][l])
+				fmt.Printf("runner==%s\n", theMap[i][j][l])
 			}
 		}
 	}
+	ed := currentMilliseconds()
+	endTime := time.Now()
+	ndStr := endTime.Format(time.RFC3339)
+	theMap = make([]map[string][]string, 0)
+	one = make(map[string][]string)
+	fmt.Printf("started-at::%s\n", stStr)
+	time.Sleep(time.Millisecond * 1000)
+	fmt.Printf("ended-at::%s\n", ndStr)
+	time.Sleep(time.Millisecond * 1000)
+	fmt.Printf("time elapse::%s (seconds)\n", strconv.FormatInt((ed-st)/1000, 10))
+	time.Sleep(time.Millisecond * 2000)
+}
+
+func currentMilliseconds() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
 }

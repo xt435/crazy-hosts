@@ -1,4 +1,4 @@
-package main
+package assethub
 
 import (
 	"bytes"
@@ -17,11 +17,11 @@ import (
 var dataStoreCrazyHandle DataStore
 var cache Cache
 
-func initDataStoreCrazyHandlers() {
+func InitDataStoreCrazyHandlers() {
 	dataStoreCrazyHandle.session = connectToDb()
 }
 
-func initCache() {
+func InitCache() {
 	cache.redisSession = RedisClient()
 }
 
@@ -375,9 +375,6 @@ func bindingHandler(jsonData string, session *mgo.Session) string {
 			if errFind == nil && len(dup.BindingSerial) > 0 {
 				continue
 			}
-			// finalizedData, _ := json.Marshal(check)
-			// fmt.Println("TO-BINDING-POOL-LEN=" + strconv.Itoa(len(finalizedData)))
-			// fmt.Println("TO-BINDING-POOL-CONT=" + string(finalizedData))
 			insertErr := coll.Insert(check)
 			if insertErr != nil {
 				fmt.Println(insertErr)
@@ -392,7 +389,7 @@ type OriginStruct struct {
 	originName []string
 }
 
-func syncOrigins(redisCli *redis.Client) {
+func SyncOrigins(redisCli *redis.Client) {
 	defer func() {
 		err := recover()
 		if err != nil {

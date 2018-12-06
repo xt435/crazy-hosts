@@ -1,4 +1,4 @@
-package main
+package assethub
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 
 var dataStoreMultiTrack DataStore
 
-func initDataStoreHandlersMultiTrack() {
+func InitDataStoreHandlersMultiTrack() {
 	dataStoreMultiTrack.session = connectToDb()
 }
 

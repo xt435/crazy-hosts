@@ -1,4 +1,4 @@
-package main
+package assethub
 
 import (
 	"crypto/md5"
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -16,41 +17,12 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-func uuidGenAlt() string {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		log.Fatal(err)
-	}
-	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
-	fmt.Println(uuid)
-	return uuid
-}
-
-func uuidGen() string {
-	u, err := uuid.NewV4()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return u.String()
-}
-
-type DataStore struct {
-	session *mgo.Session
-}
-
-type Cache struct {
-	redisSession *redis.Client
-}
-
 const (
 	version_name_of_app = "crazy.app._ver=0.0.1"
 
 	WORDS_OF_CHOICE     = "TheFashionableWorldDismayedByTheMurderOfTheHonourableRonaldAdair"
 	default_server_port = ":8093"
 
-	//	mongod_main_one               = "192.168.204.130:27017"
 	// mongod_main_one = "192.168.204.145:27017" //this one is for my local
 	mongod_main_one = "127.0.0.1:27017" //this one is for alpha version
 
@@ -69,7 +41,6 @@ const (
 	mongod_coll_name_bindingPool        = "BindingBoundagePool"
 	mongod_coll_name_qrgen_rec          = "QRGen_Record"
 
-	//	redis_host = "192.168.204.130"
 	// redis_host = "192.168.204.145" //this one is for local
 	redis_host = "127.0.0.1" //this one is for alpha version
 	redis_port = 6379
@@ -101,6 +72,54 @@ const (
 	ASSET_TO_BASE = "#ASSET-DATA@POSTGRES"
 	HUMAN_TO_BASE = "#HUMAN-DATA@POSTGRES"
 )
+
+func uuidGenAlt() string {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	fmt.Println(uuid)
+	return uuid
+}
+
+func uuidGen() string {
+	u, err := uuid.NewV4()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return u.String()
+}
+
+func connectToDb() *mgo.Session {
+	session, err := mgo.Dial(mongod_main_one)
+	checkWithWarn(err)
+	// defer session.Close()
+	session.SetMode(mgo.Monotonic, true)
+	return session
+}
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func checkWithWarn(err error) {
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+type DataStore struct {
+	session *mgo.Session
+}
+
+type Cache struct {
+	redisSession *redis.Client
+}
 
 /*
 	for user entrance.
@@ -176,7 +195,7 @@ func RedisClient() *redis.Client {
 	})
 	pong, err := client.Ping().Result()
 	fmt.Println("*******************************REDIS CONN CHECK*******************************")
-	fmt.Println("==%s==%s", pong, err)
+	fmt.Printf("=redis=%s == =redis=%s\n", pong, err)
 	if pong == "PONG" {
 		fmt.Println("REDIS CONNECTION DONE.")
 	}
@@ -248,4 +267,29 @@ func dailyKeyChain(ref string) string {
 
 func currentMilliseconds() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
+}
+
+func errorFeedbackCommon(err error, w http.ResponseWriter, answer string) bool {
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("{\"TraceBackServer\":\"" + answer + "\"}"))
+		w.WriteHeader(http.StatusNotAcceptable)
+		return true
+	}
+	return false
+}
+
+func commonWriteBack(w http.ResponseWriter, returns []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(returns)
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func deferErrorFeedbackRest(w http.ResponseWriter, returns []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(returns)
+	w.WriteHeader(http.StatusNoContent)
 }

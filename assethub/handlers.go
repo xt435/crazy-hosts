@@ -1,4 +1,4 @@
-package main
+package assethub
 
 import (
 	"encoding/json"
@@ -16,11 +16,11 @@ import (
 
 var dataStore DataStore
 
-func initDataStoreHandlers() {
+func InitDataStoreHandlers() {
 	dataStore.session = connectToDb()
 }
 
-func handlerForFuckers(path string) {
+func HandlerForFuckers(path string) {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -30,10 +30,10 @@ func handlerForFuckers(path string) {
 	if path != "" {
 		path = "/" + path
 	}
+	fmt.Println("default_server_port=" + default_server_port)
 	r := mux.NewRouter().StrictSlash(true)
 	r.HandleFunc("/getme/fuckers"+path, Index)
 	r.HandleFunc(path+"/novice/reqid={reqid}&reqname={reqname}", Novice)
-	// r.HandleFunc(path+data_entry_main, DataEntryHandler).Methods("POST")
 	r.HandleFunc(path+asset_saving_path, receiverOfAssets).Methods("POST")
 	r.HandleFunc(path+human_saving_path, receiverOfHumans).Methods("POST")
 	r.HandleFunc(path+binding_check_path, receiveOfBindingBoundagePool).Methods("POST")
@@ -42,8 +42,6 @@ func handlerForFuckers(path string) {
 	r.HandleFunc(path+origin_manager, originManager).Methods("POST")
 	r.HandleFunc(path+humpers_jumpers, HumpersJumpers)
 	r.HandleFunc(path+recordqr, ReportToSatan).Methods("POST")
-	//	r.HandleFunc("/secure", SecureHandler).Schemes("https")
-	fmt.Println("default_server_port=" + default_server_port)
 	log.Fatal(http.ListenAndServe(default_server_port, r))
 }
 
@@ -336,7 +334,6 @@ func originManager(w http.ResponseWriter, r *http.Request) {
 		req := make(map[string]string)
 		errParse := json.Unmarshal([]byte(reqStr), &req)
 		checkWithWarn(errParse)
-		// s := dataStore.session.Copy()
 		if req["order"] == "origins" {
 			os := findOrigins()
 			if os != nil {
@@ -401,29 +398,6 @@ func dealWithReq(r *http.Request) string {
 	}
 	return bodyDataContext
 }
-
-/*func DataEntryHandler(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		err := recover()
-		if err != nil {
-			fmt.Println("Error: ", err)
-		}
-	}()
-	fmt.Println(r.PostFormValue(basic_data_request_name))
-	dataJson := r.PostFormValue(basic_data_request_name)
-	mocker, res := checkBasicEntryData(dataJson)
-	if res != "success" {
-		fmt.Fprintln(w, "{\"error\":\""+res+"\"}", html.EscapeString("AT "+time.Now().String()))
-	} else {
-		finalRes := dataPushIn(mocker)
-		fmt.Println("RESULT:" + res)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(finalRes); err != nil {
-			panic(err)
-		}
-	}
-}*/
 
 /*
 r := mux.NewRouter()
