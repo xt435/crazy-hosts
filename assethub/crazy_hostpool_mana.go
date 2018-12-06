@@ -78,13 +78,13 @@ func GroupingFinal() {
 //	#######################################################################################
 /********************************************************************************************/
 type HostContext struct {
-	Mask string `json:"mask", bson:"mask"`
-	Ip   string `json:"ip", bson:"ip"`
+	Mask string `json:"mask" bson:"mask"`
+	Ip   string `json:"ip" bson:"ip"`
 }
 
 type HostMan struct {
-	Ip    string   `json:"ip", bson:"ip"`
-	Hosts []string `json:"hosts", bson:"hosts"`
+	Ip    string   `json:"ip" bson:"ip"`
+	Hosts []string `json:"hosts" bson:"hosts"`
 }
 
 func reduceToGroup() {

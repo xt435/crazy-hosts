@@ -115,7 +115,7 @@ type AssetApplication struct {
 type AssetLocationInfo struct {
 	Lon      float64 `json:"lon" bson:"lon"`
 	Lat      float64 `json:"lat" bson:"lat"`
-	Loc      string  `json:"loc" bson"loc"`
+	Loc      string  `json:"loc" bson:"loc"`
 	TimeLast int64   `json:"timeLast" bson:"timeLast"`
 }
 
