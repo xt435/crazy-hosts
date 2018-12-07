@@ -8,7 +8,7 @@ import (
 	"time"
 
 	hub "./assethub"
-	// sock "./monitors_pack"
+	// sock "./monitorspack"
 )
 
 var GATE_WAY_WORD = "trollschain"
