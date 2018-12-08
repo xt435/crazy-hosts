@@ -3,19 +3,35 @@ package monitorspack
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis"
 
 	hub "../assethub"
 )
 
-//InternalFairHead the head orders
-type InternalFairHead interface {
-	getFromPool()
-	CheckContentAlive()
-	CheckAliveOnly() bool
+type monitorspack struct {
+	initTime string `json:"" bson:""`
+	initInfo string `json:"" bson:""`
 }
+
+//MONITORS redis key for all configurations
+const MONITORS string = "$#MONITORS@SERVERS"
+
+//InternalFairHead the head runner
+type InternalFairHead interface {
+	checkContentAlive()
+	checkAliveOnly() AliveReport
+}
+
+type conf struct {
+	cmds []string
+}
+
+// type internalFairHead struct {
+// 	provocate func(process InternalFairHead)
+// }
 
 //AliveReport when getting status from serv
 type AliveReport struct {
@@ -44,22 +60,70 @@ type ConfigsReader struct {
 	ConnData []ConnectionData `json:"connData" bson:"connData"`
 }
 
-var config ConfigsReader
+var cacheRed *redis.Client
 
-func getFromPool(file string) {
-	configTemp := ConfigsReader{}
-	configFile, err := os.Open(file)
-	defer configFile.Close()
-	hub.Check(err)
-	jsonParser := json.NewDecoder(configFile)
-	jsonParser.Decode(&configTemp)
-	config = configTemp
+func redisClient(redisHost string, redisPort int, redisDB int) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisHost + ":" + strconv.Itoa(redisPort),
+		Password: "",
+		DB:       redisDB,
+	})
+	pong, err := client.Ping().Result()
+	fmt.Println("*******************************REDIS CONN CHECK*******************************")
+	fmt.Printf("=redis=%s == =redis=%s\n", pong, err)
+	if pong == "PONG" {
+		fmt.Println("REDIS CONNECTION DONE.")
+	}
+	fmt.Println("*******************************REDIS CONN CHECK*******************************")
+	return client
 }
 
-//CheckContentAlive alive check
-func (conn ConnectionData) CheckContentAlive() {
+//InitCache Please do this first.
+func InitCache(host string, port int, db int) {
+	cacheRed = redisClient(host, port, db)
+}
+
+// var Bmon internalFairHead
+var cf conf
+var initor monitorspack
+var config ConfigsReader
+
+//GetConfig this is the implement
+func GetConfig() ConfigsReader {
+	return config
+}
+
+//InitPool Please do this second.
+func InitPool(initInfo string) {
+	res := cacheRed.HGetAll(MONITORS)
+	confs := res.Val()
+	traverser := make([]string, 0)
+	cds := []ConnectionData{}
+	for i := range confs {
+		traverser = append(traverser, confs[i])
+		cd := ConnectionData{}
+		err := json.Unmarshal([]byte(confs[i]), &cd)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			cds = append(cds, cd)
+		}
+	}
+	config = ConfigsReader{ConnData: cds}
+	cf = conf{cmds: traverser}
+	initor = monitorspack{initTime: strconv.FormatInt(hub.CurrentMillis(), 10), initInfo: initInfo}
+	//TODO save initor
+	// Bmon = internalFairHead{}
+}
+
+//Mon is starter
+func Mon(ii InternalFairHead) {
+	ii.checkContentAlive()
+}
+
+func (cr ConfigsReader) checkContentAlive() {
 	fmt.Printf("InternalFairs==%s", strconv.FormatInt(hub.CurrentMillis(), 10))
-	conns := config.ConnData
+	conns := cr.ConnData
 	for i := range conns {
 		var sq = make([]string, 0)
 		var rq = make([]string, 0)
@@ -69,8 +133,11 @@ func (conn ConnectionData) CheckContentAlive() {
 	}
 }
 
-//MonitorTimer start
-func MonitorTimer(sq []string, novice map[string]string, gap int) {
+func (cr ConfigsReader) checkAliveOnly() AliveReport {
+	return AliveReport{}
+}
+
+func monitorTimer(sq []string, novice map[string]string, gap int) {
 	for {
 		if len(sq) > 0 {
 			sq = append(sq, novice["fatal"])
@@ -87,6 +154,6 @@ func monFeedback(rq []string) {
 			fmt.Printf("FB==%s", r)
 			rq = rq[1:]
 		}
-		time.Sleep(time.Millisecond * 1000)
+		time.Sleep(time.Millisecond * 500)
 	}
 }

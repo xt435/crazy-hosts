@@ -7,11 +7,16 @@ import (
 	"strings"
 	"time"
 
-	hub "./assethub"
-	// sock "./monitorspack"
+	sock "./monitorspack"
 )
 
 var GATE_WAY_WORD = "trollschain"
+
+const (
+	RedMonIP   = "192.168.204.145"
+	RedMonPort = 6379
+	RedMonDB   = 0
+)
 
 func main() {
 
@@ -42,30 +47,32 @@ func main() {
 		i++
 	}
 
-	// go sock.MainClient("40.73.119.13", 9987) //being a client
+	// clientOfRedis := hub.RedisClient()
 
-	clientOfRedis := hub.RedisClient()
-	hub.InitDataStoreHandlers()
-	hub.InitDataStoreCrazyHandlers()
-	hub.InitDataStoreHostPool()
-	hub.InitCache()
-	hub.InitDataStoreHandlersMultiTrack()
+	sock.InitCache(RedMonIP, RedMonPort, RedMonDB)
+	sock.InitPool("from 127.0.0.1")
+	sock.Mon(sock.GetConfig())
+	// hub.InitDataStoreHandlers()
+	// hub.InitDataStoreCrazyHandlers()
+	// hub.InitDataStoreHostPool()
+	// hub.InitCache()
+	// hub.InitDataStoreHandlersMultiTrack()
 
-	go hub.InitGroupingProcess(clientOfRedis)
-	go hub.Grouping()
-	go hub.GroupingFinal()
-	go hub.DailyChainKeyGenerate()
+	// go hub.InitGroupingProcess(clientOfRedis)
+	// go hub.Grouping()
+	// go hub.GroupingFinal()
+	// go hub.DailyChainKeyGenerate()
 
-	go hub.AssetReceiverRunner(clientOfRedis)
-	go hub.VirtualContractReceiverRunner(clientOfRedis)
-	go hub.HumanReceiver(clientOfRedis)
+	// go hub.AssetReceiverRunner(clientOfRedis)
+	// go hub.VirtualContractReceiverRunner(clientOfRedis)
+	// go hub.HumanReceiver(clientOfRedis)
 
-	go hub.AssetSender(clientOfRedis)
-	go hub.HumanSender(clientOfRedis)
+	// go hub.AssetSender(clientOfRedis)
+	// go hub.HumanSender(clientOfRedis)
 
-	go hub.SyncOrigins(clientOfRedis)
+	// go hub.SyncOrigins(clientOfRedis)
 
-	hub.HandlerForFuckers(GATE_WAY_WORD)
+	// hub.HandlerForFuckers(GATE_WAY_WORD)
 }
 
 func goThruGoMap(limit int) {
