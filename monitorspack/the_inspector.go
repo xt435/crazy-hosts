@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,7 @@ const (
 var ChancesForRetryMax = 10
 var bytesRepo []map[string][]string
 var finalConn net.Conn
+var wg sync.WaitGroup
 
 func setMaxRetry(numberMax int) {
 	ChancesForRetryMax = numberMax
@@ -35,7 +37,7 @@ type Conn struct {
 	Rq   []string `json:"rq" bson:"rq"`
 }
 
-func connection(conner *Conn) {
+func connection(conner Conn) {
 	var chancesForRetry = 0
 	for {
 		con, err := conn(conner.IP, conner.Port)
@@ -63,6 +65,7 @@ func connection(conner *Conn) {
 	go recvSockCli(connBuf, conner)
 	for {
 		if len(conner.Sq) > 0 {
+			fmt.Printf("==%s\n", conner.Sq[0])
 			head := conner.Sq[0]
 			conner.Sq = conner.Sq[1:]
 			_, errWrite := finalConn.Write([]byte(head))
@@ -74,11 +77,11 @@ func connection(conner *Conn) {
 				return
 			}
 		}
-		time.Sleep(time.Millisecond * 300)
+		time.Sleep(time.Millisecond * 1000)
 	}
 }
 
-func recvSockCli(connBuf *bufio.Reader, conner *Conn) {
+func recvSockCli(connBuf *bufio.Reader, conner Conn) {
 	for {
 		mess, err := connBuf.ReadString('\n')
 		if err != nil {
@@ -100,13 +103,25 @@ func conn(ip string, port int) (net.Conn, error) {
 	return conn, err
 }
 
+func SyncWG(wg sync.WaitGroup) {
+	wg = wg
+}
+
 // MainClient sender and receiver
 func MainClient(ip string, port int, sq []string, rq []string) {
-	fmt.Printf("time-init==%s", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
+
+	fmt.Printf("time-init==%s = %s\n", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10), time.RFC3339)
 	checkLocal, checkLocalPort := GetOutboundIP()
-	fmt.Printf("LOCAL::%s", checkLocal.String()+":"+strconv.Itoa(checkLocalPort))
-	conn := Conn{ip, port, sq, rq}
-	connection(&conn)
+	fmt.Printf("LOCAL::%s\n", checkLocal.String()+":"+strconv.Itoa(checkLocalPort))
+	// conn := Conn{IP: ip, Port: port, Sq: sq, Rq: rq}
+	for {
+		if len(sq) > 0 {
+			fmt.Println(sq[0])
+			sq = sq[1:]
+			wg.Done()
+		}
+	}
+	// connection(conn)
 }
 
 // GetOutboundIP check self
