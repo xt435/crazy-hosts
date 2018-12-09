@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"sync"
+	"strings"
 	"time"
 
 	sock "./monitorspack"
@@ -18,50 +18,50 @@ const (
 	RedMonDB   = 0
 )
 
-var sq = make([]string, 0)
-var rq = make([]string, 0)
-var wg sync.WaitGroup
+var sq = make(chan string)
+var rq = make(chan string)
 
 func main() {
 
-	// var isRun string
-	// var testLimit int
-	// fmt.Println("TeeHee, world. This is the truck chain lead program. My name is Go Crazy.\nI was created by necrophiliaccannibal.")
-	// fmt.Printf("==%s\n", "Yo, man, you wanna go for a performance test run? [y]=yes [n or any]=no")
-	// fmt.Scanf("%s\n", &isRun)
-	// if strings.Compare(isRun, "y") == 0 || strings.Compare(isRun, "yes") == 0 {
-	// 	fmt.Printf("==%s\n", "Ok, enter a number max 1000000")
-	// 	_, err := fmt.Scanf("%d\n", &testLimit)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 	}
-	// } else {
-	// 	testLimit = 10
-	// }
-	// if testLimit > 1000000 {
-	// 	testLimit = 1000000
-	// }
+	var isRun string
+	var testLimit int
+	fmt.Println("TeeHee, world. This is the truck chain lead program. My name is Go Crazy.\nI was created by necrophiliaccannibal.")
+	fmt.Printf("==%s\n", "Yo, man, you wanna go for a performance test run? [y]=yes [n or any]=no")
+	fmt.Scanf("%s\n", &isRun)
+	if strings.Compare(isRun, "y") == 0 || strings.Compare(isRun, "yes") == 0 {
+		fmt.Printf("==%s\n", "Ok, enter a number max 1000000")
+		_, err := fmt.Scanf("%d\n", &testLimit)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		testLimit = 10
+	}
+	if testLimit > 1000000 {
+		testLimit = 1000000
+	}
 
-	// goThruGoMap(testLimit)
-	// var i = 0
-	// for i < 3 {
-	// 	var timeNow = time.Now().Format(time.RFC850)
-	// 	fmt.Println("TeeHee now we start -> " + strconv.Itoa(i+1) + "-" + timeNow)
-	// 	time.Sleep(time.Millisecond * 500)
-	// 	i++
-	// }
+	goThruGoMap(testLimit)
+	var i = 0
+	for i < 3 {
+		var timeNow = time.Now().Format(time.RFC850)
+		fmt.Println("TeeHee now we start -> " + strconv.Itoa(i+1) + "-" + timeNow)
+		time.Sleep(time.Millisecond * 500)
+		i++
+	}
 
-	// clientOfRedis := hub.RedisClient()
-
-	// sock.InitCache(RedMonIP, RedMonPort, RedMonDB)
-	// sock.InitPool("from 127.0.0.1")
-	// sock.Mon(sock.GetConfig())
-
+	// TODO this
+	sock.InitCache(RedMonIP, RedMonPort, RedMonDB)
+	sock.InitPool("from 127.0.0.1")
+	sock.Mon(sock.GetConfig())
+	li := make([]sock.MonContent, 0)
+	mc := sock.MonContent{Name: "test", IP: "127.0.0.1", Port: 9999, Send: sq, Recv: rq}
+	li = append(li, mc)
 	go monFeedback(rq)
 	go sendCheck(sq)
-	sock.SyncWG(wg)
-	sock.MainClient("127.0.0.1", 9999, sq, rq)
+	sock.MainClient(li)
 
+	// clientOfRedis := hub.RedisClient()
 	// hub.InitDataStoreHandlers()
 	// hub.InitDataStoreCrazyHandlers()
 	// hub.InitDataStoreHostPool()
@@ -85,23 +85,21 @@ func main() {
 	// hub.HandlerForFuckers(GATE_WAY_WORD)
 }
 
-func monFeedback(rq []string) {
-	var r string
+func monFeedback(rq chan string) {
 	for {
-		if len(rq) > 0 {
-			r = rq[0]
-			fmt.Printf("FB==%s", r)
-			rq = rq[1:]
+		mess := <-rq
+		if len(mess) > 0 {
+			fmt.Printf("message==%s\n", mess)
 		}
 		time.Sleep(time.Millisecond * 500)
 	}
 }
 
-func sendCheck(sq []string) {
+func sendCheck(sq chan string) {
 	for {
-		wg.Add(1)
-		sq = append(sq, "0123456789ABCDEF")
-		fmt.Printf("check fucking head==%s %d\n", sq[len(sq)-1], len(sq))
+		messSend := "0123456789ABCDEF"
+		sq <- messSend
+		fmt.Printf("check fucking head==%s %d\n", messSend, len(sq))
 		time.Sleep(time.Millisecond * 3000)
 	}
 }

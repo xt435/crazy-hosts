@@ -31,10 +31,10 @@ func setMaxRetry(numberMax int) {
 
 //Conn the connection parameters
 type Conn struct {
-	IP   string   `json:"ip" bson:"ip"`
-	Port int      `json:"port" bson:"port"`
-	Sq   []string `json:"sq" bson:"sq"`
-	Rq   []string `json:"rq" bson:"rq"`
+	IP   string
+	Port int
+	Sq   chan string
+	Rq   chan string
 }
 
 func connection(conner Conn) {
@@ -64,11 +64,10 @@ func connection(conner Conn) {
 	connBuf := bufio.NewReader(finalConn)
 	go recvSockCli(connBuf, conner)
 	for {
-		if len(conner.Sq) > 0 {
-			fmt.Printf("==%s\n", conner.Sq[0])
-			head := conner.Sq[0]
-			conner.Sq = conner.Sq[1:]
-			_, errWrite := finalConn.Write([]byte(head))
+		m := <-conner.Sq
+		if len(m) > 0 {
+			fmt.Printf("mout==%s\n", m)
+			_, errWrite := finalConn.Write([]byte(m))
 			if errWrite != nil {
 				fmt.Println(errWrite)
 				time.Sleep(time.Millisecond * 300)
@@ -93,7 +92,7 @@ func recvSockCli(connBuf *bufio.Reader, conner Conn) {
 		time.Sleep(time.Millisecond * 30)
 		if len(mess) > 0 {
 			fmt.Printf("mess_raw==%s\n", mess)
-			conner.Rq = append(conner.Rq, mess)
+			conner.Rq <- mess
 		}
 	}
 }
@@ -103,25 +102,26 @@ func conn(ip string, port int) (net.Conn, error) {
 	return conn, err
 }
 
-func SyncWG(wg sync.WaitGroup) {
-	wg = wg
-}
-
 // MainClient sender and receiver
-func MainClient(ip string, port int, sq []string, rq []string) {
-
+func MainClient(mon []MonContent) {
 	fmt.Printf("time-init==%s = %s\n", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10), time.RFC3339)
 	checkLocal, checkLocalPort := GetOutboundIP()
 	fmt.Printf("LOCAL::%s\n", checkLocal.String()+":"+strconv.Itoa(checkLocalPort))
-	// conn := Conn{IP: ip, Port: port, Sq: sq, Rq: rq}
-	for {
-		if len(sq) > 0 {
-			fmt.Println(sq[0])
-			sq = sq[1:]
-			wg.Done()
+	if len(mon) > 0 {
+		for i := range mon {
+			conn := Conn{IP: mon[i].IP, Port: mon[i].Port, Sq: mon[i].Send, Rq: mon[i].Recv}
+			// for {
+			// 	mess := <-sq
+			// 	if len(mess) > 0 {
+			// 		fmt.Printf("mosters::%s\n", mess)
+			// 		rq <- "verywell"
+			// 	}
+			// 	time.Sleep(time.Millisecond * 300)
+			// }
+			connection(conn)
 		}
 	}
-	// connection(conn)
+
 }
 
 // GetOutboundIP check self

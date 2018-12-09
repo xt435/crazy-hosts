@@ -7,13 +7,20 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-
-	hub "../assethub"
 )
 
 type monitorspack struct {
-	initTime string `json:"" bson:""`
-	initInfo string `json:"" bson:""`
+	initTime string
+	initInfo string
+}
+
+//MonContent contents on select actors.
+type MonContent struct {
+	Name string
+	IP   string
+	Port int
+	Send chan string
+	Recv chan string
 }
 
 //MONITORS redis key for all configurations
@@ -111,7 +118,7 @@ func InitPool(initInfo string) {
 	}
 	config = ConfigsReader{ConnData: cds}
 	cf = conf{cmds: traverser}
-	initor = monitorspack{initTime: strconv.FormatInt(hub.CurrentMillis(), 10), initInfo: initInfo}
+	initor = monitorspack{initTime: strconv.FormatInt(currentMilliseconds(), 10), initInfo: initInfo}
 	//TODO save initor
 	// Bmon = internalFairHead{}
 }
@@ -122,15 +129,15 @@ func Mon(ii InternalFairHead) {
 }
 
 func (cr ConfigsReader) checkContentAlive() {
-	fmt.Printf("InternalFairs==%s", strconv.FormatInt(hub.CurrentMillis(), 10))
-	conns := cr.ConnData
-	for i := range conns {
-		var sq = make([]string, 0)
-		var rq = make([]string, 0)
-		go monFeedback(rq)
-		time.Sleep(time.Millisecond * 1000)
-		go MainClient(conns[i].IPAddr, conns[i].Port, sq, rq)
-	}
+	fmt.Printf("InternalFairs==%s", strconv.FormatInt(currentMilliseconds(), 10))
+	// conns := cr.ConnData
+	// for i := range conns {
+	// 	var sq = make([]string, 0)
+	// 	var rq = make([]string, 0)
+	// 	go monFeedback(rq)
+	// 	time.Sleep(time.Millisecond * 1000)
+	// 	go MainClient(conns[i].IPAddr, conns[i].Port, sq, rq)
+	// }
 }
 
 func (cr ConfigsReader) checkAliveOnly() AliveReport {
@@ -156,4 +163,12 @@ func monFeedback(rq []string) {
 		}
 		time.Sleep(time.Millisecond * 500)
 	}
+}
+
+func currentMilliseconds() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
+}
+
+func CurrentMillis() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
 }
