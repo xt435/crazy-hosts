@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
-	sock "./monitorspack"
+	"github.com/alexflint/go-arg"
+
+	hub "./assethub"
 )
 
 var GATE_WAY_WORD = "trollschain"
@@ -20,6 +22,28 @@ const (
 
 var sq = make(chan string)
 var rq = make(chan string)
+
+// cliArgs defines the configuration that the CLI
+// expects. By using a struct we can very easily
+// aggregate them into an object and check what are
+// the expected types.
+// If we need to mock this later it's just a matter
+// of reusing the struct.
+type cliArgs struct {
+	Port int `arg:"-p,help:port to listen to"`
+}
+
+var (
+	// args is a reference to an instantiation of
+	// the configuration that the CLI expects but
+	// with some values set.
+	// By setting some values in advance we provide
+	// default values that the user might provide
+	// or not.
+	args = &cliArgs{
+		Port: 8896,
+	}
+)
 
 func main() {
 
@@ -50,39 +74,31 @@ func main() {
 		i++
 	}
 
-	// TODO this
-	sock.InitCache(RedMonIP, RedMonPort, RedMonDB)
-	sock.InitPool("from 127.0.0.1")
-	sock.Mon(sock.GetConfig())
-	li := make([]sock.MonContent, 0)
-	mc := sock.MonContent{Name: "test", IP: "127.0.0.1", Port: 9999, Send: sq, Recv: rq}
-	li = append(li, mc)
-	go monFeedback(rq)
-	go sendCheck(sq)
-	sock.MainClient(li)
+	arg.MustParse(args)
+	fmt.Printf("must-port=%d\n", args.Port)
 
-	// clientOfRedis := hub.RedisClient()
-	// hub.InitDataStoreHandlers()
-	// hub.InitDataStoreCrazyHandlers()
-	// hub.InitDataStoreHostPool()
-	// hub.InitCache()
-	// hub.InitDataStoreHandlersMultiTrack()
+	clientOfRedis := hub.RedisClient()
+	hub.InitDataStoreHandlers()
+	hub.InitDataStoreCrazyHandlers()
+	hub.InitDataStoreHostPool()
+	hub.InitCache()
+	hub.InitDataStoreHandlersMultiTrack()
 
-	// go hub.InitGroupingProcess(clientOfRedis)
-	// go hub.Grouping()
-	// go hub.GroupingFinal()
-	// go hub.DailyChainKeyGenerate()
+	go hub.InitGroupingProcess(clientOfRedis)
+	go hub.Grouping()
+	go hub.GroupingFinal()
+	go hub.DailyChainKeyGenerate()
 
-	// go hub.AssetReceiverRunner(clientOfRedis)
-	// go hub.VirtualContractReceiverRunner(clientOfRedis)
-	// go hub.HumanReceiver(clientOfRedis)
+	go hub.AssetReceiverRunner(clientOfRedis)
+	go hub.VirtualContractReceiverRunner(clientOfRedis)
+	go hub.HumanReceiver(clientOfRedis)
 
-	// go hub.AssetSender(clientOfRedis)
-	// go hub.HumanSender(clientOfRedis)
+	go hub.AssetSender(clientOfRedis)
+	go hub.HumanSender(clientOfRedis)
 
-	// go hub.SyncOrigins(clientOfRedis)
+	go hub.SyncOrigins(clientOfRedis)
 
-	// hub.HandlerForFuckers(GATE_WAY_WORD)
+	hub.HandlerForFuckers(GATE_WAY_WORD)
 }
 
 func monFeedback(rq chan string) {

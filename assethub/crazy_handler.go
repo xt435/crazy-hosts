@@ -367,13 +367,9 @@ func bindingHandler(jsonData string, session *mgo.Session) string {
 		for i := range bindData {
 			dup := BindingBoundagePool{}
 			check := bindData[i]
-			tabReplace := strings.Replace(check.BindContent, "\t", "", -1)
-			backReplace := strings.Replace(tabReplace, "\n", "", -1)
-			check.BindContent = backReplace
-			errFind := coll.Find(bson.M{"bindingSerial": check.BindingSerial, "origin": check.Origin,
-				"bindingContent": check.BindContent, "bindFlag": check.BindFlag}).One(&dup)
+			errFind := coll.Find(bson.M{"bindingSerial": check.BindingSerial, "origin": check.Origin}).One(&dup)
 			if errFind == nil && len(dup.BindingSerial) > 0 {
-				continue
+				coll.Remove(dup)
 			}
 			insertErr := coll.Insert(check)
 			if insertErr != nil {

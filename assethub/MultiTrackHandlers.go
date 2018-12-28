@@ -18,7 +18,7 @@ func InitDataStoreHandlersMultiTrack() {
 }
 
 const (
-	SITE_NAME = "http://40.73.119.13:8080/#/"
+	SITE_NAME = "http://www.linde-china.com"
 )
 
 func HumpersJumpers(w http.ResponseWriter, r *http.Request) {

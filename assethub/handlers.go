@@ -33,7 +33,7 @@ func HandlerForFuckers(path string) {
 	fmt.Println("default_server_port=" + default_server_port)
 	r := mux.NewRouter().StrictSlash(true)
 	r.HandleFunc("/getme/fuckers"+path, Index)
-	r.HandleFunc(path+"/novice/reqid={reqid}&reqname={reqname}", Novice)
+	r.HandleFunc(path+"/novice/{reqid}/{reqname}", Novice)
 	r.HandleFunc(path+asset_saving_path, receiverOfAssets).Methods("POST")
 	r.HandleFunc(path+human_saving_path, receiverOfHumans).Methods("POST")
 	r.HandleFunc(path+binding_check_path, receiveOfBindingBoundagePool).Methods("POST")

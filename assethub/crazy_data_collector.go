@@ -161,11 +161,16 @@ type HumansTrustContext struct {
 	VirtualTrustGauge int              `json:"virtualTrustGauge" bson:"virtualTrustGauge"`
 }
 
+type BindContents struct {
+	Name     string `json:"name" bson:"name"`
+	Value    string `json:"value" bson:"value"`
+	BindFlag string `json:"bindFlag" bson:"bindFlag"`
+}
+
 type BindingBoundagePool struct {
-	BindingSerial string `json:"bindingSerial" bson:"bindingSerial"`
-	Origin        string `json:"origin" bson:"origin"`
-	BindContent   string `json:"bindContent" bson:"bindContent"`
-	BindFlag      string `json:"bindFlag" bson:"bindFlag"`
+	BindingSerial string         `json:"bindingSerial" bson:"bindingSerial"`
+	Origin        string         `json:"origin" bson:"origin"`
+	BindContent   []BindContents `json:"bindContent" bson:"bindContent"`
 }
 
 const (
