@@ -320,6 +320,7 @@ func fixOnHumanSerialNumber(origin string, humanName string) string {
 	return sn
 }
 
+//HumanReceiver get human thru redis. not useful for version 1.
 func HumanReceiver(rd *_redis.Client) {
 	for {
 		msg := rd.LPop(humansReceiver)
@@ -330,6 +331,7 @@ func HumanReceiver(rd *_redis.Client) {
 	}
 }
 
+//AssetReceiverRunner for getting data thru redis. not useful for version 1.
 func AssetReceiverRunner(rd *_redis.Client) {
 	psb := rd.Subscribe(assetsReceiver)
 	defer psb.Close()
@@ -352,6 +354,7 @@ func AssetReceiverRunner(rd *_redis.Client) {
 	}
 }
 
+//VirtualContractReceiverRunner for getting data thru redis. not useful for version 1.
 func VirtualContractReceiverRunner(rd *_redis.Client) {
 	psb := rd.Subscribe(virtualContractReceiver)
 	defer psb.Close()
@@ -376,7 +379,10 @@ func VirtualContractReceiverRunner(rd *_redis.Client) {
 
 var bufForAssetSender = make([]string, 0)
 var bufForHumanSender = make([]string, 0)
+var bufForRemoveAsset = make([]string, 0)
+var bufForRemoveHuman = make([]string, 0)
 
+//AssetSender pushing to backend
 func AssetSender(rd *_redis.Client) {
 	for {
 		if len(bufForAssetSender) > 0 {
@@ -387,11 +393,34 @@ func AssetSender(rd *_redis.Client) {
 	}
 }
 
+//HumanSender pushing to backend
 func HumanSender(rd *_redis.Client) {
 	for {
 		if len(bufForHumanSender) > 0 {
 			rd.LPush(HUMAN_TO_BASE, bufForHumanSender[0])
 			bufForHumanSender = bufForHumanSender[1:]
+		}
+		time.Sleep(time.Millisecond * 2)
+	}
+}
+
+//AssetRemoveSender pushing to backend
+func AssetRemoveSender(rd *_redis.Client) {
+	for {
+		if len(bufForRemoveAsset) > 0 {
+			rd.LPush(ASSET_REMOVE, bufForRemoveAsset[0])
+			bufForRemoveAsset = bufForRemoveAsset[1:]
+		}
+		time.Sleep(time.Millisecond * 2)
+	}
+}
+
+//HumanRemoveSender pushing to backend
+func HumanRemoveSender(rd *_redis.Client) {
+	for {
+		if len(bufForRemoveHuman) > 0 {
+			rd.LPush(HUMAN_REMOVE, bufForRemoveHuman[0])
+			bufForRemoveHuman = bufForRemoveHuman[1:]
 		}
 		time.Sleep(time.Millisecond * 2)
 	}

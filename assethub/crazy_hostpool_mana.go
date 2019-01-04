@@ -10,7 +10,7 @@ https://appliedgo.net/mapreduce/
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	_ "math/rand"
 
 	"strconv"
 	"strings"
@@ -22,18 +22,20 @@ import (
 )
 
 var dataStoreHostPool DataStore
-var session *mgo.Session
+var sessionGrouping *mgo.Session
+var buf = make([]string, 0)
+var totalNumber int
+var runNumber int
 
+//InitDataStoreHostPool mongo init
 func InitDataStoreHostPool() {
 	dataStoreHostPool.session = connectToDb()
-	session = dataStoreHostPool.session.Copy()
+	sessionGrouping = dataStoreHostPool.session.Copy()
 }
 
-var buf = make([]string, 0)
-
-var totalNumber int
-
+//InitGroupingProcess grouping init
 func InitGroupingProcess(client *redis.Client) {
+	go syncHostPool(client, sessionGrouping)
 	for {
 		if totalNumber == 0 {
 			ids, leng := getAllSerials(client)
@@ -41,12 +43,11 @@ func InitGroupingProcess(client *redis.Client) {
 				manageThePool(ids, client)
 			}
 		}
-		time.Sleep(time.Millisecond * 1000 * 30)
+		time.Sleep(time.Millisecond * 1000 * 60 * 4)
 	}
 }
 
-var runNumber int
-
+//Grouping is the first stage loop that groups host ips forever.
 func Grouping() {
 	for {
 		if len(buf) > 0 {
@@ -58,6 +59,7 @@ func Grouping() {
 	}
 }
 
+//GroupingFinal is the last stage loop to reducing group info.
 func GroupingFinal() {
 	for {
 		if runNumber > 0 && totalNumber > 0 && runNumber >= totalNumber {
@@ -88,8 +90,8 @@ type HostMan struct {
 }
 
 func reduceToGroup() {
-	coll := session.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
-	collHostMan := session.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
+	coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
+	collHostMan := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
 
 	contexts := []HostContext{}
 	err := coll.Find(bson.M{"mask": bson.M{"$ne": "null"}}).All(&contexts)
@@ -206,7 +208,7 @@ func reduceToGroup() {
 }
 
 func hostFlating(host string) {
-	coll := session.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
+	coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
 
 	maindict := strings.Split(buf[0], "_")
 	dict := maindict[1] //being the ip
@@ -254,7 +256,7 @@ func convBasicInfoToJson(ba *AssetObject) string {
 }
 
 func getAllSerials(redisCli *redis.Client) ([]string, int) {
-	coll := session.DB(mongod_truck_db).C(mongod_coll_name_assets)
+	coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_assets)
 	bsMnts := []AssetObject{}
 	errorForFind := coll.Find(nil).All(&bsMnts)
 	check(errorForFind)
@@ -281,7 +283,7 @@ func DailyChainKeyGenerate() {
 		fmt.Println("TIMEFORCHAINKEY==" + tm)
 		tm = strings.Split(tm, "T")[0]
 		fmt.Println("db==" + mongod_truck_db + "+coll==" + mongod_coll_name_key_chain)
-		coll := session.DB(mongod_truck_db).C(mongod_coll_name_key_chain)
+		coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_key_chain)
 		upperpart := ""
 		judge, _ := strconv.Atoi(tm[9:])
 		if judge >= 0 && judge < 3 {
@@ -311,9 +313,9 @@ func DailyChainKeyGenerate() {
 }
 
 /**
-this method is for test only.
+this method is for test only. mocks data for grouping test.
 */
-func mockHosts(redisCli *redis.Client, id string) {
+/* func mockHosts(redisCli *redis.Client, id string) {
 	ipGen := ""
 	judger := rand.Intn(4)
 	if judger == 1 {
@@ -330,4 +332,4 @@ func mockHosts(redisCli *redis.Client, id string) {
 			strconv.Itoa(rand.Intn(10)) + "." + strconv.Itoa(rand.Intn(254)) + ":" + strconv.Itoa(rand.Intn(65534))
 	}
 	redisCli.Set("HOST$"+id, ipGen, -1)
-}
+} */

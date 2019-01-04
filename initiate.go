@@ -12,13 +12,8 @@ import (
 	hub "./assethub"
 )
 
-var GATE_WAY_WORD = "trollschain"
-
-const (
-	RedMonIP   = "192.168.204.145"
-	RedMonPort = 6379
-	RedMonDB   = 0
-)
+//GATEWAYWORD is actually base url
+var GATEWAYWORD = "trollschain"
 
 var sq = make(chan string)
 var rq = make(chan string)
@@ -45,8 +40,7 @@ var (
 	}
 )
 
-func main() {
-
+func preCheck() {
 	var isRun string
 	var testLimit int
 	fmt.Println("TeeHee, world. This is the truck chain lead program. My name is Go Crazy.\nI was created by necrophiliaccannibal.")
@@ -76,11 +70,17 @@ func main() {
 
 	arg.MustParse(args)
 	fmt.Printf("must-port=%d\n", args.Port)
+}
+
+func main() {
+
+	preCheck()
 
 	clientOfRedis := hub.RedisClient()
 	hub.InitDataStoreHandlers()
 	hub.InitDataStoreCrazyHandlers()
 	hub.InitDataStoreHostPool()
+	hub.InitDataStoreMani()
 	hub.InitCache()
 	hub.InitDataStoreHandlersMultiTrack()
 
@@ -89,35 +89,19 @@ func main() {
 	go hub.GroupingFinal()
 	go hub.DailyChainKeyGenerate()
 
-	go hub.AssetReceiverRunner(clientOfRedis)
-	go hub.VirtualContractReceiverRunner(clientOfRedis)
-	go hub.HumanReceiver(clientOfRedis)
+	// not useful for this version::
+	// go hub.AssetReceiverRunner(clientOfRedis)
+	// go hub.VirtualContractReceiverRunner(clientOfRedis)
+	// go hub.HumanReceiver(clientOfRedis)
 
 	go hub.AssetSender(clientOfRedis)
 	go hub.HumanSender(clientOfRedis)
+	go hub.AssetRemoveSender(clientOfRedis)
+	go hub.HumanRemoveSender(clientOfRedis)
 
 	go hub.SyncOrigins(clientOfRedis)
 
-	hub.HandlerForFuckers(GATE_WAY_WORD)
-}
-
-func monFeedback(rq chan string) {
-	for {
-		mess := <-rq
-		if len(mess) > 0 {
-			fmt.Printf("message==%s\n", mess)
-		}
-		time.Sleep(time.Millisecond * 500)
-	}
-}
-
-func sendCheck(sq chan string) {
-	for {
-		messSend := "0123456789ABCDEF"
-		sq <- messSend
-		fmt.Printf("check fucking head==%s %d\n", messSend, len(sq))
-		time.Sleep(time.Millisecond * 3000)
-	}
+	hub.HandlerForFuckers(GATEWAYWORD)
 }
 
 func goThruGoMap(limit int) {

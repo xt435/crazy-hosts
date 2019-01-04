@@ -23,8 +23,8 @@ const (
 	WORDS_OF_CHOICE     = "TheFashionableWorldDismayedByTheMurderOfTheHonourableRonaldAdair"
 	default_server_port = ":8093"
 
-	// mongod_main_one = "192.168.204.146:27017" //this one is for my local
-	mongod_main_one = "127.0.0.1:27017" //this one is for alpha version
+	mongod_main_one = "192.168.204.146:27017" //this one is for my local
+	// mongod_main_one = "127.0.0.1:27017" //this one is for alpha version
 
 	mongod_main_db                  = "go_crazy_lemons"
 	mongod_coll_name_headinfo       = "headinfos"
@@ -34,6 +34,7 @@ const (
 
 	mongod_truck_db                     = "truck-lift-forks"
 	mongod_coll_name_host_pool          = "Host_Pool"
+	mongod_coll_name_host_pool_rec      = "host_pool"
 	mongod_coll_name_pool_of_host_final = "Host_Pool_Final"
 	mongod_coll_name_key_chain          = "KeyChain"
 	mongod_coll_name_assets             = "Asset_Slices"
@@ -41,8 +42,8 @@ const (
 	mongod_coll_name_bindingPool        = "BindingBoundagePool"
 	mongod_coll_name_qrgen_rec          = "QRGen_Record"
 
-	// redis_host = "192.168.204.146" //this one is for local
-	redis_host = "127.0.0.1" //this one is for alpha version
+	redis_host = "192.168.204.146" //this one is for local
+	// redis_host = "127.0.0.1" //this one is for alpha version
 	redis_port = 6379
 	redis_db   = 0
 
@@ -56,7 +57,9 @@ const (
 	asset_auth            = "assetknock"
 	header_identity       = "identity"
 	asset_saving_path     = "/assetent/"
+	asset_remove_path     = "/removeasset/"
 	human_saving_path     = "/humanent/"
+	human_remove_path     = "/removehuman/"
 	binding_check_path    = "/bc/"
 	chain_tool_user       = "/ctv/"
 	chain_tool_user_human = "/ctvh/"
@@ -71,6 +74,8 @@ const (
 
 	ASSET_TO_BASE = "#ASSET-DATA@POSTGRES"
 	HUMAN_TO_BASE = "#HUMAN-DATA@POSTGRES"
+	ASSET_REMOVE  = "#ASSET-MINUS@POSTGRES"
+	HUMAN_REMOVE  = "#HUMAN-MINUS@POSTGRES"
 )
 
 func uuidGenAlt() string {

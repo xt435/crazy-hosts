@@ -17,10 +17,12 @@ import (
 var dataStoreCrazyHandle DataStore
 var cache Cache
 
+//InitDataStoreCrazyHandlers as named
 func InitDataStoreCrazyHandlers() {
 	dataStoreCrazyHandle.session = connectToDb()
 }
 
+//InitCache as named
 func InitCache() {
 	cache.redisSession = RedisClient()
 }
@@ -357,6 +359,7 @@ func bindingHandler(jsonData string, session *mgo.Session) string {
 		err := recover()
 		if err != nil {
 			fmt.Println("bindingHandler-inner-Error: ", err)
+			return "not done"
 		}
 	}()
 	bindData := []BindingBoundagePool{}
@@ -381,10 +384,12 @@ func bindingHandler(jsonData string, session *mgo.Session) string {
 	return "done"
 }
 
+//OriginStruct for all origins
 type OriginStruct struct {
 	originName []string
 }
 
+//SyncOrigins syncs origin data
 func SyncOrigins(redisCli *redis.Client) {
 	defer func() {
 		err := recover()
