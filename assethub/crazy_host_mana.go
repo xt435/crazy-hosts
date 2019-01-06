@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -74,5 +74,43 @@ func syncHostPool(client *redis.Client, session *mgo.Session) {
 			}
 		}
 		time.Sleep(time.Millisecond * 60000 * 3)
+	}
+}
+
+//this is the pre stage thing for ip grouping
+/*
+def save_heart_beat(ident, heartbeat):
+    last_beat = fetch_key_val('HB$' + ident)
+    if last_beat is None:
+        save_key_val('HB$' + ident, str(heartbeat))
+*/
+func groupingByOrigin(client *redis.Client, session *mgo.Session) {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println("groupingByOrigin-inner-Error: ", err)
+		}
+	}()
+	poolCacheGrp := make(map[string][]string, 0)
+	allHearts, errKeys := client.Keys("HB$*").Result()
+	if errKeys != nil {
+		fmt.Println(errKeys)
+		return
+	}
+	if len(allHearts) > 0 {
+		coll := session.DB(mongod_truck_db).C(mongod_coll_name_assets)
+		var ori string
+		for i := range allHearts {
+			errFind := coll.Find(bson.M{"serialNumber": allHearts[i][3:], "$project": bson.M{"origin": 1, "_id": 0}}).One(&ori)
+			if errFind != nil {
+				continue
+			}
+			k, _ := client.Get(allHearts[i]).Result()
+			if poolCacheGrp[ori] == nil || len(poolCacheGrp[ori]) == 0 {
+				fmt.Println(k)
+			} else {
+
+			}
+		}
 	}
 }

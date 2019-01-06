@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -26,6 +26,8 @@ var sessionGrouping *mgo.Session
 var buf = make([]string, 0)
 var totalNumber int
 var runNumber int
+var coll *mgo.Collection
+var collHostMan *mgo.Collection
 
 //InitDataStoreHostPool mongo init
 func InitDataStoreHostPool() {
@@ -36,6 +38,8 @@ func InitDataStoreHostPool() {
 //InitGroupingProcess grouping init
 func InitGroupingProcess(client *redis.Client) {
 	go syncHostPool(client, sessionGrouping)
+	coll = sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
+	collHostMan = sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
 	for {
 		if totalNumber == 0 {
 			ids, leng := getAllSerials(client)
@@ -90,8 +94,8 @@ type HostMan struct {
 }
 
 func reduceToGroup() {
-	coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
-	collHostMan := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
+	// coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
+	// collHostMan := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
 
 	contexts := []HostContext{}
 	err := coll.Find(bson.M{"mask": bson.M{"$ne": "null"}}).All(&contexts)
@@ -208,9 +212,8 @@ func reduceToGroup() {
 }
 
 func hostFlating(host string) {
-	coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
-
-	maindict := strings.Split(buf[0], "_")
+	// coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
+	maindict := strings.Split(host, "_")
 	dict := maindict[1] //being the ip
 	dict = strings.Split(dict, ":")[0]
 	if dict == "" {
