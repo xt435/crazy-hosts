@@ -359,7 +359,6 @@ func bindingHandler(jsonData string, session *mgo.Session) string {
 		err := recover()
 		if err != nil {
 			fmt.Println("bindingHandler-inner-Error: ", err)
-			return "not done"
 		}
 	}()
 	bindData := []BindingBoundagePool{}

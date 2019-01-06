@@ -34,7 +34,7 @@ func syncHostPool(client *redis.Client, session *mgo.Session) {
 			fmt.Println("SyncHostPool-inner-Error: ", err)
 		}
 	}()
-	GAPTIME, _ = strconv.ParseInt("300000", 10, 64)
+	GAPTIME, _ = strconv.ParseInt("600000", 10, 64)
 	coll := session.DB(mongod_truck_db).C(mongod_coll_name_assets)
 	collRec := session.DB(mongod_truck_db).C(mongod_coll_name_host_pool_rec)
 	assets := make([]AssetsTmp, 0)

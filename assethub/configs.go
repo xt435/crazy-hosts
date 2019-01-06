@@ -23,7 +23,7 @@ const (
 	WORDS_OF_CHOICE     = "TheFashionableWorldDismayedByTheMurderOfTheHonourableRonaldAdair"
 	default_server_port = ":8093"
 
-	mongod_main_one = "192.168.204.146:27017" //this one is for my local
+	mongod_main_one = "192.168.204.147:27017" //this one is for my local
 	// mongod_main_one = "127.0.0.1:27017" //this one is for alpha version
 
 	mongod_main_db                  = "go_crazy_lemons"
@@ -42,7 +42,7 @@ const (
 	mongod_coll_name_bindingPool        = "BindingBoundagePool"
 	mongod_coll_name_qrgen_rec          = "QRGen_Record"
 
-	redis_host = "192.168.204.146" //this one is for local
+	redis_host = "192.168.204.147" //this one is for local
 	// redis_host = "127.0.0.1" //this one is for alpha version
 	redis_port = 6379
 	redis_db   = 0
