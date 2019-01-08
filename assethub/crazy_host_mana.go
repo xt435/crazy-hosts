@@ -82,7 +82,11 @@ func syncHostPool(client *redis.Client, session *mgo.Session) {
 def save_heart_beat(ident, heartbeat):
     last_beat = fetch_key_val('HB$' + ident)
     if last_beat is None:
-        save_key_val('HB$' + ident, str(heartbeat))
+		save_key_val('HB$' + ident, str(heartbeat))
+get HB$8ff7d7af11b2c16c7a2f42e12fe232e233840442
+"1546830565619# 2019-01-07 10:37:38:277#1546828658278"
+get HOST$8ff7d7af11b2c16c7a2f42e12fe232e233840442
+"192.168.88.251:34316"
 */
 func groupingByOrigin(client *redis.Client, session *mgo.Session) {
 	defer func() {
@@ -92,7 +96,7 @@ func groupingByOrigin(client *redis.Client, session *mgo.Session) {
 		}
 	}()
 	poolCacheGrp := make(map[string][]string, 0)
-	allHearts, errKeys := client.Keys("HB$*").Result()
+	allHearts, errKeys := client.Keys("HOST$*").Result()
 	if errKeys != nil {
 		fmt.Println(errKeys)
 		return
@@ -101,15 +105,38 @@ func groupingByOrigin(client *redis.Client, session *mgo.Session) {
 		coll := session.DB(mongod_truck_db).C(mongod_coll_name_assets)
 		var ori string
 		for i := range allHearts {
-			errFind := coll.Find(bson.M{"serialNumber": allHearts[i][3:], "$project": bson.M{"origin": 1, "_id": 0}}).One(&ori)
+			errFind := coll.Find(bson.M{"serialNumber": allHearts[i][5:], "$project": bson.M{"origin": 1, "_id": 0}}).One(&ori)
 			if errFind != nil {
 				continue
 			}
 			k, _ := client.Get(allHearts[i]).Result()
 			if poolCacheGrp[ori] == nil || len(poolCacheGrp[ori]) == 0 {
 				fmt.Println(k)
+				firstBlood := make([]string, 0)
+				firstBlood = append(firstBlood, allHearts[i][5:]+"#"+k)
+				poolCacheGrp[ori] = firstBlood
 			} else {
-
+				poolCacheGrp[ori] = append(poolCacheGrp[ori], allHearts[i][5:]+"#"+k)
+			}
+		}
+		//TODO make dir
+		if len(poolCacheGrp) > 0 {
+			hcs := make([]HostContext{}, 0)
+			for k, v := range poolCacheGrp {
+				if len(v) > 0 {
+					for i := range v {
+						hc := HostContext{}
+						hc.Mask = k + strings.Split(v[i], "#")[0]
+						hc.Ip = strings.Split(v[i], "#")[1]
+						hcs = append(hcs, hc)
+					}
+				}
+			}
+			fmt.Println("secondBlood")
+			time.Sleep(5)
+			for key, val := range hcs {
+				fmt.Printf("running HostContexts==%s", key)
+				reduceToGrp(val)
 			}
 		}
 	}

@@ -93,10 +93,108 @@ type HostMan struct {
 	Hosts []string `json:"hosts" bson:"hosts"`
 }
 
-func reduceToGroup() {
-	// coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
-	// collHostMan := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
+func reduceToGrp(contexts []HostContext) {
+	if len(contexts) > 0 {
+		for i := range contexts {
+			con := contexts[i]
+				hostsArr := make([]string, 0)
+				foundCon := []HostContext{}
+				if len(foundCon) < pool_max {
+					for inner := range foundCon {
+						found := foundCon[inner]
+						if found.Ip != "" {
+							if found.Ip != "" {
+								hostsArr = append(hostsArr, found.Ip)
+							}
+						}
+					}
+					for j := range hostsArr {
+						host := hostsArr[j]
+						if &host != nil && host != "" {
+							hostMan := HostMan{Ip: host, Hosts: hostsArr}
+							htmp := HostMan{}
+							errTmp := collHostMan.Find(bson.M{"ip": con.Ip}).One(&htmp)
+							if errTmp != nil {
+								collHostMan.Insert(hostMan)
+								fmt.Println("host::" + host + "==")
+							} else {
+								errTmp := collHostMan.Find(bson.M{"ip": con.Ip}).One(&htmp)
+								if errTmp == nil {
+									err_remove := collHostMan.Remove(&htmp)
+									checkErr(err_remove)
+									if err_remove == nil {
+										collHostMan.Insert(hostMan)
+										fmt.Println("host::" + host + "==")
+									}
+								}
+							}
+						}
+					}
+					hostsArr = hostsArr[:cap(hostsArr)]
+					continue
+				}
+				for f := range foundCon {
+					found := foundCon[f]
+					if found.Ip != "" {
+						hostsArr = append(hostsArr, found.Ip)
+					}
+					if len(hostsArr) == pool_max {
+						for j := range hostsArr {
+							host := hostsArr[j]
+							if &host != nil && host != "" {
+								hostMan := HostMan{Ip: host, Hosts: hostsArr}
+								htmp := HostMan{}
+								errTmp := collHostMan.Find(bson.M{"ip": con.Ip}).One(&htmp)
+								if errTmp == nil {
+									err_remove := collHostMan.Remove(&htmp)
+									checkErr(err_remove)
+									if err_remove == nil {
+										collHostMan.Insert(hostMan)
+										fmt.Println("host::" + host + "==")
+									}
+								} else {
+									collHostMan.Insert(hostMan)
+									fmt.Println("host::" + host + "==")
+								}
+							}
+						}
+						hostsArr = hostsArr[:cap(hostsArr)]
+					}
+				}
+				if len(foundCon)%pool_max > 0 {
+					count := len(foundCon) - len(foundCon)%pool_max
+					for inner := count; inner < len(foundCon); inner++ {
+						found := foundCon[inner]
+						if found.Ip != "" {
+							hostsArr = append(hostsArr, found.Ip)
+						}
+					}
+					for j := range hostsArr {
+						host := hostsArr[j]
+						if &host != nil && host != "" {
+							hostMan := HostMan{Ip: host, Hosts: hostsArr}
+							htmp := HostMan{}
+							errTmp := collHostMan.Find(bson.M{"ip": con.Ip}).One(&htmp)
+							if errTmp == nil {
+								err_remove := collHostMan.Remove(&htmp)
+								checkErr(err_remove)
+								if err_remove == nil {
+									collHostMan.Insert(hostMan)
+									fmt.Println("host::" + host + "==")
+								}
+							} else {
+								collHostMan.Insert(hostMan)
+								fmt.Println("host::" + host + "==")
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
+func reduceToGroup() {
 	contexts := []HostContext{}
 	err := coll.Find(bson.M{"mask": bson.M{"$ne": "null"}}).All(&contexts)
 	checkWithWarn(err)
