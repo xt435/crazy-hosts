@@ -121,7 +121,7 @@ func groupingByOrigin(client *redis.Client, session *mgo.Session) {
 		}
 		//TODO make dir
 		if len(poolCacheGrp) > 0 {
-			hcs := make([]HostContext{}, 0)
+			hcs := make([]HostContext, 0)
 			for k, v := range poolCacheGrp {
 				if len(v) > 0 {
 					for i := range v {
@@ -134,10 +134,7 @@ func groupingByOrigin(client *redis.Client, session *mgo.Session) {
 			}
 			fmt.Println("secondBlood")
 			time.Sleep(5)
-			for key, val := range hcs {
-				fmt.Printf("running HostContexts==%s", key)
-				reduceToGrp(val)
-			}
+			reduceToGrp(hcs)
 		}
 	}
 }
