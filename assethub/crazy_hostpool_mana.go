@@ -40,15 +40,23 @@ func InitGroupingProcess(client *redis.Client) {
 	go syncHostPool(client, sessionGrouping)
 	coll = sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)
 	collHostMan = sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_pool_of_host_final)
-	for {
-		if totalNumber == 0 {
-			ids, leng := getAllSerials(client)
-			if leng > 0 {
-				manageThePool(ids, client)
+	go func() {
+		for {
+			if totalNumber == 0 {
+				ids, leng := getAllSerials(client)
+				if leng > 0 {
+					manageThePool(ids, client)
+				}
 			}
+			time.Sleep(time.Millisecond * 1000 * 60 * 5)
 		}
-		time.Sleep(time.Millisecond * 1000 * 60 * 4)
-	}
+	}()
+	go func() {
+		for {
+			groupingByOrigin(client, sessionGrouping)
+			time.Sleep(time.Millisecond * 1000 * 60 * 3)
+		}
+	}()
 }
 
 //Grouping is the first stage loop that groups host ips forever.
@@ -68,7 +76,7 @@ func GroupingFinal() {
 	for {
 		if runNumber > 0 && totalNumber > 0 && runNumber >= totalNumber {
 			fmt.Println("group final process==" + time.Now().Format(time.RFC850))
-			reduceToGroup()
+			// reduceToGroup()
 			time.Sleep(time.Millisecond * 1000 * 1)
 			runNumber = 0
 			totalNumber = 0
@@ -77,12 +85,12 @@ func GroupingFinal() {
 	}
 }
 
-/********************************************************************************************/
-//	#######################################################################################
-//	# the ip will be mapped as four elements [0][1][2][3] each element represents one 	  #
-//	# section of the address domain. then saved to key-map in redis. key=id               #
-//	#######################################################################################
-/********************************************************************************************/
+/*******************************************************************************************
+	#######################################################################################
+	# the ip will be mapped as four elements [0][1][2][3] each element represents one 	  #
+	# section of the address domain. then saved to key-map in redis. key=id               #
+	#######################################################################################
+********************************************************************************************/
 type HostContext struct {
 	Mask string `json:"mask" bson:"mask"`
 	Ip   string `json:"ip" bson:"ip"`
@@ -193,6 +201,7 @@ func reduceToGrp(contexts []HostContext) {
 	}
 }
 
+/*
 func reduceToGroup() {
 	contexts := []HostContext{}
 	err := coll.Find(bson.M{"mask": bson.M{"$ne": "null"}}).All(&contexts)
@@ -306,7 +315,7 @@ func reduceToGroup() {
 	_, errDrop := coll.RemoveAll(bson.D{})
 	checkWithWarn(errDrop)
 	time.Sleep(time.Millisecond * 1000 * 3)
-}
+}*/
 
 func hostFlating(host string) {
 	// coll := sessionGrouping.DB(mongod_truck_db).C(mongod_coll_name_host_pool)

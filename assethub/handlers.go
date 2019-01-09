@@ -46,6 +46,7 @@ func HandlerForFuckers(path string) {
 	r.HandleFunc(path+asset_saving_path, receiverOfAssets).Methods("POST")
 	r.HandleFunc(path+human_saving_path, receiverOfHumans).Methods("POST")
 	r.HandleFunc(path+binding_check_path, receiveOfBindingBoundagePool).Methods("POST")
+	r.HandleFunc(path+binding_check_delete_path, deleteFromBoundagePool).Methods("DELETE")
 	r.HandleFunc(path+chain_tool_user, chainToolUserHandler).Methods("POST")
 	r.HandleFunc(path+chain_tool_user_human, chainToolUserGetHumanObjectHandler).Methods("POST")
 	r.HandleFunc(path+origin_manager, originManager).Methods("POST")
@@ -77,6 +78,25 @@ func sendBackWithAuth(back string, status int, w http.ResponseWriter, auth strin
 	w.Header().Set(asset_auth, auth)
 	w.Write([]byte(back))
 	w.WriteHeader(status)
+}
+
+func dealWithAuthToken(r *http.Request) string {
+	authToken := r.Header.Get(asset_auth)
+	if len(authToken) == 0 {
+		sendBackCommonHead("{\"TraceBackServer\":\"You r not authorized. please get token from novice req\"}", http.StatusForbidden, w)
+		return "not right"
+	}
+	fmt.Println("#AUTHENTICATION_ASSET_INSERT::" + authToken)
+	bodyData, errBody := ioutil.ReadAll(r.Body)
+	userPass := r.Header.Get(header_identity)
+
+	checkToken := tokenGenerator(strings.Split(userPass, "@")[0], strings.Split(userPass, "@")[1])
+	if len(checkToken) != len(authToken) || checkToken != authToken {
+		sendBackCommonHead("{\"TraceBackServer\":\"YouAreAnAlienYouAreNotAllowed\"}", http.StatusForbidden, w)
+		return "not right"
+	}
+
+	return "right"
 }
 
 // saving assets data
@@ -210,6 +230,38 @@ func receiveOfBindingBoundagePool(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	res := bindingHandler(bodyDataContext, dataStore.session.Copy())
+	if res != "done" {
+		sendBackCommonHead("{\"TraceBackServer\":\"YourRequestIsScrambled\"}", http.StatusNotAcceptable, w)
+		return
+	}
+	sendBackWithAuth("{\"TraceBackServer\":\"I_AM_A_POLAR_BEAR\"}", http.StatusOK, w, authToken)
+}
+
+// remove from binding pool.
+func deleteFromBoundagePool(w http.ResponseWriter, r *http.Request) {
+	// TODO things
+	defer sendToHellCommonHead("deleteFromBoundagePool", "{\"TraceBackServer\":\"Messy Request\"}", http.StatusNoContent, w)
+	authToken := r.Header.Get(asset_auth)
+	if len(authToken) == 0 {
+		sendBackCommonHead("{\"TraceBackServer\":\"You r not authorized. please get token from novice req\"}", http.StatusForbidden, w)
+		return
+	}
+	userPass := r.Header.Get(header_identity) //this is in the form of userId@username
+	fmt.Println("#AUTHENTICATION_ASSET_INSERT::" + authToken)
+	bodyData, errBody := ioutil.ReadAll(r.Body)
+	bodyDataContext := string(bodyData[:])
+	fmt.Println("POSTDATA=" + bodyDataContext)
+	if errBody != nil || len(bodyDataContext) <= 0 {
+		fmt.Println("Error: ", errBody)
+		sendBackCommonHead("{\"TraceBackServer\":\"YourRequestIsScrambled\"}", http.StatusNotAcceptable, w)
+		return
+	}
+	checkToken := tokenGenerator(strings.Split(userPass, "@")[0], strings.Split(userPass, "@")[1])
+	if len(checkToken) != len(authToken) || checkToken != authToken {
+		sendBackCommonHead("{\"TraceBackServer\":\"YouAreAnAlienYouAreNotAllowed\"}", http.StatusForbidden, w)
+		return
+	}
+	res := bindingDeleteHandler(bodyDataContext, dataStore.session.Copy())
 	if res != "done" {
 		sendBackCommonHead("{\"TraceBackServer\":\"YourRequestIsScrambled\"}", http.StatusNotAcceptable, w)
 		return

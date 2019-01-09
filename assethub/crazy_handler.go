@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -381,6 +381,16 @@ func bindingHandler(jsonData string, session *mgo.Session) string {
 		}
 	}
 	return "done"
+}
+
+func bindingDeleteHandler(jsonData string, session *mgo.Session) string {
+	defer func() {
+		err := recover()
+		if err != nil {
+			fmt.Println("bindingDeleteHandler-inner-Error: ", err)
+		}
+	}()
+	return ""
 }
 
 //OriginStruct for all origins

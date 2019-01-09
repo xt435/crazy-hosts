@@ -162,9 +162,14 @@ type HumansTrustContext struct {
 }
 
 type BindContents struct {
-	Name     string `json:"name" bson:"name"`
-	Value    string `json:"value" bson:"value"`
-	BindFlag string `json:"bindFlag" bson:"bindFlag"`
+	Name       string       `json:"name" bson:"name"`
+	BindValues []BindValues `json:"bindValues" bson:"bindValues"`
+	BindFlag   string       `json:"bindFlag" bson:"bindFlag"`
+}
+
+type BindValues struct {
+	FieldName  string `json:"fieldName" bson:"fieldName"`
+	FieldValue string `json:"fieldValue" bson:"fieldValue"`
 }
 
 type BindingBoundagePool struct {
