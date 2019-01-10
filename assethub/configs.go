@@ -2,7 +2,6 @@ package assethub
 
 import (
 	"crypto/md5"
-	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -66,6 +65,8 @@ const (
 	chain_tool_user_human     = "/ctvh/"
 	origin_manager            = "/ori/"
 
+	novice_path = "/novice/{reqid}/{reqname}"
+
 	//multitrack
 	humpers_jumpers = "/h1/pid={pid}"
 	recordqr        = "/qrrec/"
@@ -79,18 +80,6 @@ const (
 	HUMAN_REMOVE  = "#HUMAN-MINUS@POSTGRES"
 )
 
-func uuidGenAlt() string {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		log.Fatal(err)
-	}
-	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
-	fmt.Println(uuid)
-	return uuid
-}
-
 func uuidGen() string {
 	u, err := uuid.NewV4()
 	if err != nil {
@@ -102,7 +91,6 @@ func uuidGen() string {
 func connectToDb() *mgo.Session {
 	session, err := mgo.Dial(mongod_main_one)
 	checkWithWarn(err)
-	// defer session.Close()
 	session.SetMode(mgo.Monotonic, true)
 	return session
 }

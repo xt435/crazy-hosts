@@ -74,7 +74,7 @@ func preCheck() {
 
 func main() {
 
-	preCheck()
+	// preCheck()
 
 	clientOfRedis := hub.RedisClient()
 	hub.InitDataStoreHandlers()
@@ -84,10 +84,10 @@ func main() {
 	hub.InitCache()
 	hub.InitDataStoreHandlersMultiTrack()
 
-	go hub.InitGroupingProcess(clientOfRedis)
-	go hub.Grouping()
-	go hub.GroupingFinal()
-	go hub.DailyChainKeyGenerate()
+	// go hub.InitGroupingProcess(clientOfRedis)
+	// go hub.Grouping()
+	// go hub.GroupingFinal()
+	// go hub.DailyChainKeyGenerate()
 
 	// not useful for this version::
 	// go hub.AssetReceiverRunner(clientOfRedis)

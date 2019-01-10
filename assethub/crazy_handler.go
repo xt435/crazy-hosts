@@ -354,33 +354,96 @@ func humanHasher(humanObject *HumansContext) string {
 	return hash
 }
 
-func bindingHandler(jsonData string, session *mgo.Session) string {
+func bindingHandler(jsonData string, session *mgo.Session, switcher int) string {
 	defer func() {
 		err := recover()
 		if err != nil {
 			fmt.Println("bindingHandler-inner-Error: ", err)
 		}
 	}()
-	bindData := []BindingBoundagePool{}
-	err := json.Unmarshal([]byte(jsonData), &bindData)
-	checkWithWarn(err)
 	coll := initAssetHandlerConn(3, session)
-	if len(bindData) > 0 {
-		for i := range bindData {
-			dup := BindingBoundagePool{}
-			check := bindData[i]
-			errFind := coll.Find(bson.M{"bindingSerial": check.BindingSerial, "origin": check.Origin}).One(&dup)
-			if errFind == nil && len(dup.BindingSerial) > 0 {
-				coll.Remove(dup)
+	if jsonData[0:1] == "[" {
+		resList := make([]string, 0)
+		if switcher == 0 {
+			bindData := []BindingBoundagePool{}
+			err := json.Unmarshal([]byte(jsonData), &bindData)
+			checkWithWarn(err)
+			if len(bindData) > 0 {
+				for i := range bindData {
+					resList = append(resList, dealWithBindData(bindData[i], coll))
+				}
 			}
-			insertErr := coll.Insert(check)
-			if insertErr != nil {
-				fmt.Println(insertErr)
+		} else {
+			bindData := []BindingBoundagePoolFlat{}
+			err := json.Unmarshal([]byte(jsonData), &bindData)
+			checkWithWarn(err)
+			if len(bindData) > 0 {
+				for i := range bindData {
+					resList = append(resList, dealWithBindDataFlat(bindData[i], coll))
+				}
+			}
+		}
+		for i := range resList {
+			if strings.Compare(resList[i], "done") != 0 {
 				return "insertErr"
 			}
 		}
+	} else {
+		coll := initAssetHandlerConn(3, session)
+		if switcher == 0 {
+			bindData := BindingBoundagePool{}
+			err := json.Unmarshal([]byte(jsonData), &bindData)
+			checkWithWarn(err)
+			return dealWithBindData(bindData, coll)
+		} else {
+			bindData := BindingBoundagePoolFlat{}
+			err := json.Unmarshal([]byte(jsonData), &bindData)
+			checkWithWarn(err)
+			return dealWithBindDataFlat(bindData, coll)
+		}
 	}
 	return "done"
+}
+
+func dealWithBindData(bindData BindingBoundagePool, coll *mgo.Collection) string {
+	dup := BindingBoundagePool{}
+	check := bindData
+	errFind := coll.Find(bson.M{"bindingSerial": check.BindingSerial, "origin": check.Origin}).One(&dup)
+	if errFind != nil {
+		fmt.Println(errFind)
+	}
+	if len(dup.BindingSerial) > 0 {
+		coll.Remove(dup)
+	}
+	insertErr := coll.Insert(check)
+	if insertErr != nil {
+		fmt.Println(insertErr)
+		return "insertErr"
+	}
+	return "done"
+}
+
+func dealWithBindDataFlat(bindData BindingBoundagePoolFlat, coll *mgo.Collection) string {
+	dup := BindingBoundagePoolFlat{}
+	check := bindData
+	errFind := coll.Find(bson.M{"bindingSerial": check.BindingSerial, "origin": check.Origin}).One(&dup)
+	if errFind != nil {
+		fmt.Println(errFind)
+	}
+	if len(dup.BindingSerial) > 0 {
+		coll.Remove(dup)
+	}
+	insertErr := coll.Insert(check)
+	if insertErr != nil {
+		fmt.Println(insertErr)
+		return "insertErr"
+	}
+	return "done"
+}
+
+type BindDel struct {
+	BindingSerial string `json:"bindingSerial"`
+	Origin        string `json:"origin"`
 }
 
 func bindingDeleteHandler(jsonData string, session *mgo.Session) string {
@@ -390,7 +453,27 @@ func bindingDeleteHandler(jsonData string, session *mgo.Session) string {
 			fmt.Println("bindingDeleteHandler-inner-Error: ", err)
 		}
 	}()
-	return ""
+	coll := initAssetHandlerConn(3, session)
+	bindDel := BindDel{}
+	errJson := json.Unmarshal([]byte(jsonData), &bindDel)
+	if errJson != nil {
+		return "json error"
+	}
+	dup := BindingBoundagePool{}
+	errFind := coll.Find(bson.M{"bindingSerial": bindDel.BindingSerial, "origin": bindDel.Origin}).One(&dup)
+	if errFind != nil {
+		fmt.Println(errFind)
+		dupFlat := BindingBoundagePoolFlat{}
+		errFind = coll.Find(bson.M{"bindingSerial": bindDel.BindingSerial, "origin": bindDel.Origin}).One(&dupFlat)
+		if errFind != nil {
+			fmt.Println(errFind)
+			return "failed"
+		}
+	}
+	if len(dup.BindingSerial) > 0 {
+		coll.Remove(dup)
+	}
+	return "done"
 }
 
 //OriginStruct for all origins

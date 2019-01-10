@@ -161,6 +161,12 @@ type HumansTrustContext struct {
 	VirtualTrustGauge int              `json:"virtualTrustGauge" bson:"virtualTrustGauge"`
 }
 
+type BindContentsFlat struct {
+	Name     string `json:"name" bson:"name"`
+	Value    string `json:"value" bson:"value"`
+	BindFlag string `json:"bindFlag" bson:"bindFlag"`
+}
+
 type BindContents struct {
 	Name       string       `json:"name" bson:"name"`
 	BindValues []BindValues `json:"bindValues" bson:"bindValues"`
@@ -176,6 +182,12 @@ type BindingBoundagePool struct {
 	BindingSerial string         `json:"bindingSerial" bson:"bindingSerial"`
 	Origin        string         `json:"origin" bson:"origin"`
 	BindContent   []BindContents `json:"bindContent" bson:"bindContent"`
+}
+
+type BindingBoundagePoolFlat struct {
+	BindingSerial string             `json:"bindingSerial" bson:"bindingSerial"`
+	Origin        string             `json:"origin" bson:"origin"`
+	BindContent   []BindContentsFlat `json:"bindContent" bson:"bindContent"`
 }
 
 const (
